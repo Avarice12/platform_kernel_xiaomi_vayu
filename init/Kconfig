@@ -1218,6 +1218,16 @@ config LIST_CACHED_FREQ_TASKS
 
 	  CONFIG_LIST_CACHED_FREQ_TASKS="libabc.so,AppName,org.company.app"
 
+config CPUSETS_ASSIST
+	bool "Cpusets configuration helper"
+	depends on CPUSETS
+	depends on ANDROID
+	help
+	  This option enables the configuration of default cpusets
+	  parameters from kernel.
+
+	  If unsure, say N.
+
 config STUNE_ASSIST
 	bool "SchedTune configuration helper"
 	depends on SCHED_TUNE
