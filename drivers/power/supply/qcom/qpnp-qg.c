@@ -2017,14 +2017,6 @@ static int qg_psy_set_property(struct power_supply *psy,
 			pr_warn("Capacity learning disabled!\n");
 			return 0;
 		}
-		if (chip->cl->active) {
-			pr_warn("Capacity learning active!\n");
-			return 0;
-		}
-		if (pval->intval <= 0 || pval->intval > chip->cl->nom_cap_uah) {
-			pr_err("charge_full is out of bounds\n");
-			return -EINVAL;
-		}
 		mutex_lock(&chip->cl->lock);
 		rc = qg_store_learned_capacity(chip, pval->intval);
 		if (!rc)
