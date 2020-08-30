@@ -1988,6 +1988,7 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE,
 	POWER_SUPPLY_PROP_BATTERY_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_DC_THERMAL_LEVELS,
+	POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL,
 };
 
 #define DEBUG_ACCESSORY_TEMP_DECIDEGC	250
@@ -2161,6 +2162,9 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_SLOWLY_CHARGING:
 		rc = smblib_get_prop_battery_slowly_charging(chg, val);
 		break;
+	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
+		rc = smblib_get_prop_system_temp_level(chg, val);
+		break;
 	case POWER_SUPPLY_PROP_BQ_INPUT_SUSPEND:
 		rc = smblib_get_prop_battery_bq_input_suspend(chg, val);
 		break;
@@ -2314,6 +2318,9 @@ static int smb5_batt_set_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_SLOWLY_CHARGING:
 			rc = smblib_set_prop_battery_slowly_charging(chg, val);
+		break;
+	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
+		rc = smblib_set_prop_system_temp_level(chg, val);
 		break;
 	default:
 		rc = -EINVAL;
