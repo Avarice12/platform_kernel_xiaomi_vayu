@@ -4708,7 +4708,9 @@ static bool throttle_cfs_rq(struct cfs_rq *cfs_rq)
 
 		qcfs_rq->h_nr_running -= task_delta;
 		qcfs_rq->idle_h_nr_running -= idle_task_delta;
+#ifdef CONFIG_SCHED_WALT
 		walt_dec_throttled_cfs_rq_stats(&qcfs_rq->walt_stats, cfs_rq);
+#endif
 
 		if (qcfs_rq->load.weight)
 			dequeue = 0;
@@ -4716,7 +4718,9 @@ static bool throttle_cfs_rq(struct cfs_rq *cfs_rq)
 
 	if (!se) {
 		sub_nr_running(rq, task_delta);
+#ifdef CONFIG_SCHED_WALT
 		walt_dec_throttled_cfs_rq_stats(&rq->walt_stats, cfs_rq);
+#endif
 	}
 
 	/*
@@ -4777,8 +4781,9 @@ void unthrottle_cfs_rq(struct cfs_rq *cfs_rq)
 
 		cfs_rq->h_nr_running += task_delta;
 		cfs_rq->idle_h_nr_running += idle_task_delta;
+#ifdef CONFIG_SCHED_WALT
 		walt_inc_throttled_cfs_rq_stats(&cfs_rq->walt_stats, tcfs_rq);
-
+#endif
 
 		/* end evaluation on encountering a throttled cfs_rq */
 		if (cfs_rq_throttled(cfs_rq))
@@ -5602,7 +5607,9 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 
 	if (!se) {
 		sub_nr_running(rq, 1);
+#ifdef CONFIG_SCHED_WALT
 		dec_rq_walt_stats(rq, p);
+#endif
 	}
 
 	/* balance early to pull high priority tasks */
