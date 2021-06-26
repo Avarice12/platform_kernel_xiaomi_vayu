@@ -1,1 +1,2 @@
+ccflags-y += -Ofast
 obj-$(CONFIG_FINGERPRINT_FPC_VAYU) += fpc1020_tee.o
