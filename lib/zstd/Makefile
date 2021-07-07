@@ -32,3 +32,5 @@ obj-y :=	common/debug.o \
                 decompress/zstd_ddict.o \
                 decompress/zstd_decompress.o \
                 decompress/zstd_decompress_block.o \
+
+ccflags-y += -Ofast
