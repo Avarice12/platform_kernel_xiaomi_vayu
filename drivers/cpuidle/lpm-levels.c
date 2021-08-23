@@ -814,7 +814,7 @@ exit:
 	dev->last_residency = ktime_us_delta(ktime_get(), start);
 	trace_cpu_idle_exit(idx, success);
 	if (cpu->bias) {
-		if (!idx)
+                if (!idx)
 			biastimer_cancel();
 		cpu->bias = 0;
 	}
