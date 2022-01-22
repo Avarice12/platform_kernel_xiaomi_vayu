@@ -1001,6 +1001,9 @@ KBUILD_CFLAGS += $(call cc-disable-warning, restrict)
 # Enabled with W=2, disabled by default as noisy
 KBUILD_CFLAGS += $(call cc-disable-warning, maybe-uninitialized)
 
+# disable warning -Wunused-function
+KBUILD_CFLAGS += $(call cc-disable-warning, unused-function)
+
 # disable warning -Wunused-variable
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-variable)
 
