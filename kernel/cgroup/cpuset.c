@@ -2081,9 +2081,7 @@ static void uclamp_set(struct kernfs_open_file *of,
 		{"foreground", 	     	"0",  "50",  0, 0},
 		{"background", 	     	"20", "max", 0, 0},
 		{"system-background", 	"0",  "40",  0, 0},
-		{"camera-daemon",	"0", "50",   0, 0},
-		{"background",		"20", "100", 0, 0},
-		{"system-background",	"0",  "40",  0, 0},
+		{"camera-daemon",	"0", "50", 0, 0},
 	};
 
 	for (i = 0; i < ARRAY_SIZE(tgts); i++) {
