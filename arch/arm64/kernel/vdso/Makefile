@@ -19,7 +19,9 @@ ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1  --hash-style=sysv \
 		--build-id -n -T
 ccflags-y := -fno-stack-protector
 ccflags-y += -DBUILD_VDSO -DDISABLE_BRANCH_PROFILING -ffixed-x18
-ccflags-y += $(DISABLE_LTO)
+
+# For userspace compatibility
+ccflags-y += -mcpu=cortex-a53 -mtune=cortex-a53
 
 # Force -O2 to avoid libgcc dependencies
 CFLAGS_REMOVE_vgettimeofday.o = -pg -Os
