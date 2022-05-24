@@ -3235,7 +3235,7 @@ void hdd_wlan_list_fw_profile(uint16_t *length,
  *
  * Return: none
  */
-static __maybe_unused void hdd_display_stats_help(void)
+static void hdd_display_stats_help(void)
 {
 	hdd_nofl_info("iwpriv wlan0 dumpStats [option] - dump statistics");
 	hdd_nofl_info("iwpriv wlan0 clearStats [option] - clear statistics");
@@ -3262,7 +3262,6 @@ static __maybe_unused void hdd_display_stats_help(void)
 int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 {
 	int ret = 0;
-#ifdef WLAN_DEBUG
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -3305,7 +3304,6 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 		}
 		break;
 	}
-#endif
 	return ret;
 }
 
