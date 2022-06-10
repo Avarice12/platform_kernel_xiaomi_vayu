@@ -3326,7 +3326,7 @@ cppflags-$(CONFIG_DUMP_REO_QUEUE_INFO_IN_DDR) += -DDUMP_REO_QUEUE_INFO_IN_DDR
 
 KBUILD_CPPFLAGS += $(cppflags-y)
 
-ccflags-y += -Wmissing-prototypes
+ccflags-y += -Wmissing-prototypes -Wno-strict-prototypes
 
 ifeq ($(call cc-option-yn, -Wheader-guard), y)
 ccflags-y += -Wheader-guard
