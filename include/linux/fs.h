@@ -1324,10 +1324,6 @@ extern int send_sigurg(struct fown_struct *fown);
 #define sb_has_strict_encoding(sb) \
 	(sb->s_encoding_flags & SB_ENC_STRICT_MODE_FL)
 
-#define sb_has_enc_strict_mode(sb) \
-	(sb->s_encoding_flags & SB_ENC_STRICT_MODE_FL)
-
-
 /*
  *	Umount options
  */
