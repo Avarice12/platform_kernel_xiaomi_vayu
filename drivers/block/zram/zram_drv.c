@@ -47,6 +47,7 @@ static int zram_major;
 static const char *default_compressor = CONFIG_ZRAM_DEF_COMP;
 
 /* Module params (documentation at end) */
+#ifndef CONFIG_HSWAP
 static unsigned int num_devices = 1;
 #else
 static unsigned int num_devices = 2;
