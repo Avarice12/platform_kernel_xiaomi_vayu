@@ -38,5 +38,3 @@ obj-y :=	zstd_compress_module.o \
                 decompress/zstd_ddict.o \
                 decompress/zstd_decompress.o \
                 decompress/zstd_decompress_block.o \
-
-ccflags-y += -Ofast
