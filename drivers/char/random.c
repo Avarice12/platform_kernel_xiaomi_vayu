@@ -2098,7 +2098,6 @@ const struct file_operations urandom_fops = {
 	.write = random_write,
 	#endif
 	.unlocked_ioctl = random_ioctl,
-	.compat_ioctl = compat_ptr_ioctl,
 	.fasync = random_fasync,
 	.llseek = noop_llseek,
 };
