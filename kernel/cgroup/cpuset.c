@@ -2068,8 +2068,8 @@ static struct cftype files[] = {
 #ifdef CONFIG_UCLAMP_ASSIST
 struct ucl_param {
 	char *name;
-	char uclamp_min[3];
-	char uclamp_max[3];
+	char uclamp_min[4];
+	char uclamp_max[4];
 	u64  uclamp_latency_sensitive;
 	u64  uclamp_boosted;
 };
@@ -2082,12 +2082,12 @@ static void uclamp_set(struct kernfs_open_file *of,
 	const char *cs_name = cs->css.cgroup->kn->name;
 
 	static struct ucl_param tgts[] = {
-		{"top-app",    	     	"20", "max", 1, 1},  // 20-100%
-		{"foreground", 	     	"10", "80",  1, 0},  // 10-80%
-		{"background", 	     	"0",  "50",  0, 0},  // 0-50%
-		{"system-background", 	"0",  "60",  0, 0},  // 0-60%
-		{"restricted",          "0",  "20",  0, 0},  // 0-20%
-		{"camera-daemon",       "20", "max", 1, 1},  // 20-100%
+		{"top-app",             "103", "1024", 1, 1},
+		{"foreground",          "0", "1024",  1, 0},
+		{"restricted",          "0",  "50",  0, 0},
+		{"background",          "0",  "50",  0, 0},
+		{"system-background",   "0",  "50",  0, 0},
+		{"camera-daemon",       "1", "1024", 0, 1},
 	};
 
 	for (i = 0; i < ARRAY_SIZE(tgts); i++) {

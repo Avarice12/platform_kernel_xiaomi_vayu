@@ -769,7 +769,7 @@ static void set_load_weight(struct task_struct *p)
 static DEFINE_MUTEX(uclamp_mutex);
 
 /* Max allowed minimum utilization */
-unsigned int sysctl_sched_uclamp_util_min;
+unsigned int sysctl_sched_uclamp_util_min = SCHED_CAPACITY_SCALE; //required because libperfmgr uses sysctl_sched_uclamp_util_min as alternative for schedtune.task_boost 
 
 /* Max allowed maximum utilization */
 unsigned int sysctl_sched_uclamp_util_max = SCHED_CAPACITY_SCALE;
