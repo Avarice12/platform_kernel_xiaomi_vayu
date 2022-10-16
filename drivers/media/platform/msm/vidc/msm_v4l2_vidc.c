@@ -10,9 +10,6 @@
  * GNU General Public License for more details.
  *
  */
-#ifndef CONFIG_DEBUG_FS
-#define CREATE_TRACE_POINTS
-#endif
 
 #include <linux/debugfs.h>
 #include <linux/dma-mapping.h>
@@ -626,10 +623,8 @@ static int msm_vidc_probe_vidc_device(struct platform_device *pdev)
 	list_add_tail(&core->list, &vidc_driver->cores);
 	mutex_unlock(&vidc_driver->lock);
 
-#ifdef CONFIG_DEBUG_FS
 	core->debugfs_root = msm_vidc_debugfs_init_core(
 		core, vidc_driver->debugfs_root);
-#endif
 
 	vidc_driver->sku_version = core->resources.sku_version;
 
