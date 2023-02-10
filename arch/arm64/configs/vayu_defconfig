@@ -123,8 +123,12 @@ CONFIG_RCU_NEED_SEGCBLIST=y
 CONFIG_RCU_FANOUT=64
 CONFIG_RCU_FANOUT_LEAF=16
 CONFIG_RCU_FAST_NO_HZ=y
+<<<<<<< HEAD:arch/arm64/configs/vayu_defconfig
 CONFIG_RCU_BOOST=y
 CONFIG_RCU_BOOST_DELAY=500
+=======
+# CONFIG_RCU_BOOST is not set
+>>>>>>> e715dc50803c (gulch_defconfig: disable RCU boost):arch/arm64/configs/gulch_defconfig
 CONFIG_RCU_NOCB_CPU=y
 CONFIG_BUILD_BIN2C=y
 CONFIG_IKCONFIG=y
