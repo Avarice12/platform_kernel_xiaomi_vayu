@@ -139,4 +139,4 @@ Android.bp
 out/
 
 # Personal build script
-b
+build.sh
