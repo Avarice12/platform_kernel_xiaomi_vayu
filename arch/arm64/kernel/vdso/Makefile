@@ -20,6 +20,7 @@ ldflags-y := -shared -nostdlib -soname=linux-vdso.so.1  --hash-style=sysv \
 ccflags-y := -fno-stack-protector
 ccflags-y += -DBUILD_VDSO -DDISABLE_BRANCH_PROFILING -ffixed-x18
 ccflags-y += $(DISABLE_LTO)
+ccflags-y += -O3
 
 # Force -O2 to avoid libgcc dependencies
 CFLAGS_REMOVE_vgettimeofday.o = -pg -Os
@@ -27,6 +28,7 @@ CFLAGS_vgettimeofday.o = -fPIC -fasynchronous-unwind-tables
 CFLAGS_vgettimeofday.o = -O3
 ifneq ($(cc-name),clang)
 CFLAGS_vgettimeofday.o += -mcmodel=tiny
+CFLAGS_vgettimeofday.o = -O3
 endif
 
 CFLAGS_REMOVE_vgettimeofday.o += $(CC_FLAGS_SCS)
