@@ -239,6 +239,9 @@ config ARCH_HAS_SET_MEMORY
 
 # Select if arch has all set_direct_map_invalid/default() functions
 config ARCH_HAS_SET_DIRECT_MAP
+        bool
+
+config ARCH_HAS_CPU_FINALIZE_INIT
 	bool
 
 # Select if arch init_task initializer is different to init/init_task.c
