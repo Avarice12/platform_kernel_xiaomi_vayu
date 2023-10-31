@@ -1072,7 +1072,7 @@ retry:
 		if (ret)
 			goto out;
 		if (bio)
-			__submit_bio(sbi, bio, DATA);
+			f2fs_submit_bio(sbi, bio, DATA);
 
 		ret = f2fs_init_compress_ctx(cc);
 		if (ret)
