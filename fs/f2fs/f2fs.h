@@ -24,7 +24,6 @@
 #include <linux/quotaops.h>
 #include <crypto/hash.h>
 #include <linux/overflow.h>
-#include <linux/pagevec.h>
 
 #include <linux/fscrypt.h>
 #include <linux/fsverity.h>
@@ -56,7 +55,6 @@ enum {
 	FAULT_DISCARD,
 	FAULT_WRITE_IO,
 	FAULT_SLAB_ALLOC,
-	FAULT_DQUOT_INIT,
 	FAULT_MAX,
 };
 
@@ -574,9 +572,6 @@ enum {
 
 #define MAX_DIR_RA_PAGES	4	/* maximum ra pages of dir */
 
-/* dirty segments threshold for triggering CP */
-#define DEFAULT_DIRTY_THRESHOLD		4
-
 /* for in-memory extent cache entry */
 #define F2FS_MIN_EXTENT_LEN	64	/* minimum extent length */
 
@@ -633,7 +628,6 @@ struct extent_tree {
 				F2FS_MAP_UNWRITTEN)
 
 struct f2fs_map_blocks {
-	struct block_device *m_bdev;	/* for multi-device dio */
 	block_t m_pblk;
 	block_t m_lblk;
 	unsigned int m_len;
@@ -642,7 +636,6 @@ struct f2fs_map_blocks {
 	pgoff_t *m_next_extent;		/* point to next possible extent */
 	int m_seg_type;
 	bool m_may_create;		/* indicate it is from write path */
-	bool m_multidev_dio;		/* indicate it allows multi-device dio */
 };
 
 /* for flag in get_data_block */
@@ -1303,10 +1296,8 @@ enum {
 };
 
 enum {
-	FS_MODE_ADAPTIVE,		/* use both lfs/ssr allocation */
-	FS_MODE_LFS,			/* use lfs allocation only */
-	FS_MODE_FRAGMENT_SEG,		/* segment fragmentation mode */
-	FS_MODE_FRAGMENT_BLK,		/* block fragmentation mode */
+	FS_MODE_ADAPTIVE,	/* use both lfs/ssr allocation */
+	FS_MODE_LFS,		/* use lfs allocation only */
 };
 
 enum {
@@ -1755,15 +1746,12 @@ struct f2fs_sb_info {
 
 	/* For shrinker support */
 	struct list_head s_list;
-	struct mutex umount_mutex;
-	unsigned int shrinker_run_no;
-
-	/* For multi devices */
 	int s_ndevs;				/* number of devices */
 	struct f2fs_dev_info *devs;		/* for device list */
 	unsigned int dirty_device;		/* for checkpoint data flush */
 	spinlock_t dev_lock;			/* protect dirty_device */
-	bool aligned_blksize;			/* all devices has the same logical blksize */
+	struct mutex umount_mutex;
+	unsigned int shrinker_run_no;
 
 	/* For write statistics */
 	u64 sectors_written_start;
@@ -1783,9 +1771,6 @@ struct f2fs_sb_info {
 	/* For reclaimed segs statistics per each GC mode */
 	unsigned int gc_segment_mode;		/* GC state for reclaimed segments */
 	unsigned int gc_reclaimed_segs[MAX_GC_MODE];	/* Reclaimed segs for each mode */
-
-	int max_fragment_chunk;			/* max chunk size for block fragmentation mode */
-	int max_fragment_hole;			/* max hole size for block fragmentation mode */
 
 #ifdef CONFIG_F2FS_FS_COMPRESSION
 	struct kmem_cache *page_array_slab;	/* page array entry */
@@ -3426,7 +3411,6 @@ static inline int f2fs_add_link(struct dentry *dentry, struct inode *inode)
  */
 int f2fs_inode_dirtied(struct inode *inode, bool sync);
 void f2fs_inode_synced(struct inode *inode);
-int f2fs_dquot_initialize(struct inode *inode);
 int f2fs_enable_quota_files(struct f2fs_sb_info *sbi, bool rdonly);
 int f2fs_quota_sync(struct super_block *sb, int type);
 loff_t max_file_blocks(struct inode *inode);
@@ -3556,8 +3540,6 @@ void f2fs_allocate_data_block(struct f2fs_sb_info *sbi, struct page *page,
 			block_t old_blkaddr, block_t *new_blkaddr,
 			struct f2fs_summary *sum, int type,
 			struct f2fs_io_info *fio);
-void f2fs_update_device_state(struct f2fs_sb_info *sbi, nid_t ino,
-					block_t blkaddr, unsigned int blkcnt);
 void f2fs_wait_on_page_writeback(struct page *page,
 			enum page_type type, bool ordered, bool locked);
 void f2fs_wait_on_block_writeback(struct inode *inode, block_t blkaddr);
@@ -3579,16 +3561,6 @@ unsigned int f2fs_usable_segs_in_sec(struct f2fs_sb_info *sbi,
 			unsigned int segno);
 unsigned int f2fs_usable_blks_in_seg(struct f2fs_sb_info *sbi,
 			unsigned int segno);
-
-#define DEF_FRAGMENT_SIZE	4
-#define MIN_FRAGMENT_SIZE	1
-#define MAX_FRAGMENT_SIZE	512
-
-static inline bool f2fs_need_rand_seg(struct f2fs_sb_info *sbi)
-{
-	return F2FS_OPTION(sbi).fs_mode == FS_MODE_FRAGMENT_SEG ||
-		F2FS_OPTION(sbi).fs_mode == FS_MODE_FRAGMENT_BLK;
-}
 
 /*
  * checkpoint.c
@@ -4101,8 +4073,6 @@ void f2fs_end_read_compressed_page(struct page *page, bool failed,
 							block_t blkaddr);
 bool f2fs_cluster_is_empty(struct compress_ctx *cc);
 bool f2fs_cluster_can_merge_page(struct compress_ctx *cc, pgoff_t index);
-bool f2fs_all_cluster_page_loaded(struct compress_ctx *cc, struct pagevec *pvec,
-				int index, int nr_pages);
 bool f2fs_sanity_check_cluster(struct dnode_of_data *dn);
 void f2fs_compress_ctx_add_page(struct compress_ctx *cc, struct page *page);
 int f2fs_write_multi_pages(struct compress_ctx *cc,
@@ -4228,7 +4198,8 @@ static inline bool f2fs_disable_compressed_file(struct inode *inode)
 
 	if (!f2fs_compressed_file(inode))
 		return true;
-	if (S_ISREG(inode->i_mode) && F2FS_HAS_BLOCKS(inode))
+	if (S_ISREG(inode->i_mode) &&
+		(get_dirty_pages(inode) || atomic_read(&fi->i_compr_blocks)))
 		return false;
 
 	fi->i_flags &= ~F2FS_COMPR_FL;
@@ -4393,16 +4364,6 @@ static inline int block_unaligned_IO(struct inode *inode,
 	return align & blocksize_mask;
 }
 
-static inline bool f2fs_allow_multi_device_dio(struct f2fs_sb_info *sbi,
-								int flag)
-{
-	if (!f2fs_is_multi_device(sbi))
-		return false;
-	if (flag != F2FS_GET_BLOCK_DIO)
-		return false;
-	return sbi->aligned_blksize;
-}
-
 static inline bool f2fs_force_buffered_io(struct inode *inode,
 				struct kiocb *iocb, struct iov_iter *iter)
 {
@@ -4415,9 +4376,7 @@ static inline bool f2fs_force_buffered_io(struct inode *inode,
 		return true;
 	if (f2fs_compressed_file(inode))
 		return true;
-
-	/* disallow direct IO if any of devices has unaligned blksize */
-	if (f2fs_is_multi_device(sbi) && !sbi->aligned_blksize)
+	if (f2fs_is_multi_device(sbi))
 		return true;
 	/*
 	 * for blkzoned device, fallback direct IO to buffered IO, so
