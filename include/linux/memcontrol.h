@@ -165,8 +165,6 @@ struct memcg_padding {
 #define MEMCG_PADDING(name)
 #endif
 
-struct lru_gen_mm_list;
-
 /*
  * The memory controller data structure. The memory controller controls both
  * page cache and RSS per cgroup. We would eventually like to provide
@@ -283,10 +281,6 @@ struct mem_cgroup {
 	struct list_head event_list;
 	spinlock_t event_list_lock;
 
-#ifdef CONFIG_LRU_GEN
-	struct lru_gen_mm_list *mm_list;
-#endif
-
 	struct mem_cgroup_per_node *nodeinfo[0];
 	/* WARNING: nodeinfo must be the last member here */
 };
@@ -298,11 +292,6 @@ struct mem_cgroup {
 #define MEMCG_CHARGE_BATCH 32U
 
 extern struct mem_cgroup *root_mem_cgroup;
-
-static inline bool mem_cgroup_is_root(struct mem_cgroup *memcg)
-{
-	return (memcg == root_mem_cgroup);
-}
 
 static inline bool mem_cgroup_disabled(void)
 {
@@ -490,6 +479,18 @@ unsigned long mem_cgroup_get_limit(struct mem_cgroup *memcg);
 
 void mem_cgroup_print_oom_info(struct mem_cgroup *memcg,
 				struct task_struct *p);
+
+static inline void mem_cgroup_enter_user_fault(void)
+{
+	WARN_ON(current->in_user_fault);
+	current->in_user_fault = 1;
+}
+
+static inline void mem_cgroup_exit_user_fault(void)
+{
+	WARN_ON(!current->in_user_fault);
+	current->in_user_fault = 0;
+}
 
 static inline bool task_in_memcg_oom(struct task_struct *p)
 {
@@ -740,25 +741,12 @@ static inline void memcg_memory_event_mm(struct mm_struct *mm,
 void mem_cgroup_split_huge_fixup(struct page *head);
 #endif
 
-struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm);
-
-static inline void mem_cgroup_put(struct mem_cgroup *memcg)
-{
-	if (memcg)
-		css_put(&memcg->css);
-}
-
 #else /* CONFIG_MEMCG */
 
 #define MEM_CGROUP_ID_SHIFT	0
 #define MEM_CGROUP_ID_MAX	0
 
 struct mem_cgroup;
-
-static inline bool mem_cgroup_is_root(struct mem_cgroup *memcg)
-{
-	return true;
-}
 
 static inline bool mem_cgroup_disabled(void)
 {
@@ -925,6 +913,14 @@ static inline void mem_cgroup_handle_over_high(void)
 {
 }
 
+static inline void mem_cgroup_enter_user_fault(void)
+{
+}
+
+static inline void mem_cgroup_exit_user_fault(void)
+{
+}
+
 static inline bool task_in_memcg_oom(struct task_struct *p)
 {
 	return false;
@@ -1007,12 +1003,6 @@ static inline void mem_cgroup_split_huge_fixup(struct page *head)
 {
 }
 
-static inline void __count_memcg_events(struct mem_cgroup *memcg,
-					enum vm_event_item idx,
-					unsigned long count)
-{
-}
-
 static inline void count_memcg_events(struct mem_cgroup *memcg,
 				      enum vm_event_item idx,
 				      unsigned long count)
@@ -1026,15 +1016,6 @@ static inline void count_memcg_page_event(struct page *page,
 
 static inline
 void count_memcg_event_mm(struct mm_struct *mm, enum vm_event_item idx)
-{
-}
-
-static inline struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm)
-{
-	return NULL;
-}
-
-static inline void mem_cgroup_put(struct mem_cgroup *memcg)
 {
 }
 #endif /* CONFIG_MEMCG */
