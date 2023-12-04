@@ -319,7 +319,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 # "make" in the configured kernel build directory always uses that.
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-ARCH		:= arm64
+ARCH		?= $(SUBARCH)
 CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
 
 # Architecture as present in compile.h
@@ -377,17 +377,12 @@ else
 HOSTCC	= gcc
 HOSTCXX	= g++
 endif
-HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 \
+HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 \
 		-fomit-frame-pointer -std=gnu89 -pipe \
                 -Wno-deprecated-declarations $(HOST_LFS_CFLAGS)
-HOSTCXXFLAGS := -O3 $(HOST_LFS_CFLAGS)
+HOSTCXXFLAGS := -O2 $(HOST_LFS_CFLAGS)
 HOSTLDFLAGS  := $(HOST_LFS_LDFLAGS)
 HOST_LOADLIBES := $(HOST_LFS_LIBS)
-
-ifeq ($(shell $(HOSTCC) -v 2>&1 | grep -c "clang version"), 1)
-HOSTCFLAGS  += -Wno-unused-value -Wno-unused-parameter \
-		-Wno-missing-field-initializers
-endif
 
 # Make variables (CC, etc...)
 CPP		= $(CC) -E
@@ -547,6 +542,9 @@ CLANG_FLAGS	+= -Werror=unknown-warning-option
 CLANG_FLAGS	+= $(call cc-option, -Wno-misleading-indentation)
 CLANG_FLAGS	+= $(call cc-option, -Wno-bool-operation)
 CLANG_FLAGS	+= $(call cc-option, -Wno-unsequenced)
+CLANG_FLAGS	+= $(call cc-option, -Wno-unused-but-set-variable)
+CLANG_FLAGS	+= $(call cc-option, -Wno-int-conversion)
+CLANG_FLAGS	+= $(call cc-option, -Wno-void-ptr-dereference)
 CLANG_FLAGS	+= $(call cc-option, -opaque-pointers)
 KBUILD_CFLAGS	+= $(CLANG_FLAGS)
 KBUILD_AFLAGS	+= $(CLANG_FLAGS)
@@ -723,6 +721,7 @@ export LLVM_AR LLVM_NM
 LDFLAGS		+= -O3
 LDFLAGS		+= --plugin-opt=O3
 LDFLAGS		+= --lto-O3
+LDFLAGS		+= --plugin-opt=-import-instr-limit=40
 endif
 
 # The arch Makefile can set ARCH_{CPP,A,C}FLAGS to override the default
@@ -753,7 +752,11 @@ KBUILD_CFLAGS   += -Os
 else
 ifeq ($(cc-name),clang)
 KBUILD_CFLAGS   += -O3
-KBUILD_CFLAGS	+= -mcpu=cortex-a76 -mtune=cortex-a76
+#Enable MLGO for register allocation.
+KBUILD_CFLAGS   += -mllvm -regalloc-enable-advisor=release
+#Enable hot cold split optimization
+KBUILD_CFLAGS   += -mllvm -hot-cold-split=true
+KBUILD_CFLAGS	+= -march=armv8.2-a+dotprod -mcpu=cortex-a76+crypto+crc
 ifdef CONFIG_LTO_CLANG
 KBUILD_CFLAG	+= -fwhole-program-vtables
 endif
@@ -762,6 +765,12 @@ KBUILD_CFLAGS	+= -mllvm -polly \
 		   -mllvm -polly-ast-use-context \
 		   -mllvm -polly-invariant-load-hoisting \
 		   -mllvm -polly-run-inliner \
+		   -mllvm -polly-loopfusion-greedy=1 \
+		   -mllvm -polly-reschedule=1 \
+		   -mllvm -polly-postopts=1 \
+		   -mllvm -polly-omp-backend=LLVM \
+		   -mllvm -polly-scheduling=dynamic \
+		   -mllvm -polly-scheduling-chunksize=1 \
 		   -mllvm -polly-vectorizer=stripmine
 # Polly may optimise loops with dead paths beyound what the linker
 # # can understand. This may negate the effect of the linker's DCE
@@ -775,7 +784,7 @@ endif
 ifdef CONFIG_INLINE_OPTIMIZATION
 KBUILD_CFLAGS	+= -mllvm -inline-threshold=2000
 KBUILD_CFLAGS	+= -mllvm -inlinehint-threshold=3000
-KBUILD_CFLAGS	+= -mllvm -unroll-threshold=700
+KBUILD_CFLAGS	+= -mllvm -unroll-threshold=1200
 endif
 
 else
@@ -864,7 +873,7 @@ KBUILD_CFLAGS += $(call cc-option,-fno-delete-null-pointer-checks,)
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-but-set-variable)
 
 ifeq ($(ld-name),lld)
-LDFLAGS += --lto-O3
+LDFLAGS += O3
 endif
 
 KBUILD_CFLAGS += $(call cc-disable-warning, unused-const-variable)
